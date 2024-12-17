@@ -1,4 +1,4 @@
-<h1>Price Tracker that scrapes your given link</h1>
+<h1>Price Tracker that scrapes a product link</h1>
 
 <div>This is a Telegram bot that will scrape your favourite items landing page to catch price drops</div>
 
