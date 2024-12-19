@@ -1,3 +1,6 @@
+pydantic==2.10.4
+firebase-admin==6.6.0
+pydantic_core==2.27.2
 python-dotenv==0.21.0
 beautifulsoup4==4.10.0
 pyTelegramBotAPI==4.25.0
