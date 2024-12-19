@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import re
 import firebase_admin
 from firebase_admin import credentials, db
-from database.user import User
+from database.models.user import User
 from helpers.content_parsers import AmazonParser
 
 
