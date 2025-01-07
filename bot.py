@@ -1,11 +1,14 @@
 import os
 import telebot
 from telebot.types import Message, BotCommand
+from uuid import uuid4
 from dotenv import load_dotenv
 import re
+from helpers.utils import get_user_from_message
 import firebase_admin
 from firebase_admin import credentials, db
 from database.models.user import User
+from database.models.product import Product
 from helpers.content_parsers import AmazonParser
 
 
@@ -51,12 +54,13 @@ def send_welcome(message):
 def track_link(message: Message):
     print("now tracking")
 
-    command_args = message.text.split(maxsplit=1)
-    if(len(command_args) < 2):
-        bot.reply_to(message, "Please provide a link to track")
+    command_args = message.text.split(maxsplit=2)
+    if(len(command_args) < 3):
+        bot.reply_to(message, "I need you to provide the tracking link and the expected price")
         return
 
     link = command_args[1]
+    expected_price = float(command_args[2])
     url_pattern = r"(https?://[^\s]+)"
     match = re.match(url_pattern, link)
     if not match:
@@ -64,20 +68,37 @@ def track_link(message: Message):
         return
     
     parser = AmazonParser()
-    price = parser.get_price(link)
+    price = float(parser.get_price(link).replace(",", ""))
+    product = Product(
+        tracking_link=link, current_price=price, expected_price=expected_price, platform="amazon"
+        
+    )
+    user = get_user_from_message(message)
+    product_ref = db.reference("users").child(str(user.id)).child("products")
+    all_products = product_ref.get()
+    new_product = product.model_dump()
+    if not all_products:
+        product_ref.set(new_product)
+    else:
+        product_ref.push(new_product)
+    product_ref.push(product.model_dump())
     bot.send_message(message.chat.id, text=f"Rest easy, we'll notify you once the price deviates from {price}")
 
 @bot.message_handler(commands=["debug"])
 def debug_print(message:Message):
+    print("user", message.from_user)
+    print("message", message)
     user = User(
+        chat_id=message.chat.id,
         user_id=str(message.from_user.id),
-        user_name=message.from_user.username
+        username=message.from_user.username,
+        first_name=message.from_user.first_name
     )
     print(f"user is {user.model_dump()}")
     print("now fetching users")
-    ref = db.reference("user")
-    data = ref.get()
-    print(data)
+    user_ref: db.Reference = db.reference("users")
+    this_user = user_ref.child(str(message.from_user.id)).get()
+    print("this_user", this_user)
     
 
 bot.infinity_polling()

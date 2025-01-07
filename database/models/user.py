@@ -1,10 +1,11 @@
 from pydantic import BaseModel
-from typing import Optional
 
 class User(BaseModel):
     
-    user_id: str
-    user_name: str
+    username: str
+    first_name: str
+    user_id: str | int
+    chat_id: str | int
     
     class Config:
         extra = "forbid"
