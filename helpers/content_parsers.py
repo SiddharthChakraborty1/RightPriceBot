@@ -12,7 +12,7 @@ class BaseParser:
     def get_price(self, url)-> str:
         
         if not all([self.price_element, self.price_identifier]):
-            return "N/A"
+            return "0"
 
         source = urllib.request.urlopen(url)
         soup = bs4.BeautifulSoup(source, "html.parser")
