@@ -47,8 +47,36 @@ firebase_admin.initialize_app(cred, {
 
 
 @bot.message_handler(commands=["start", "hello"])
-def send_welcome(message):
-    bot.reply_to(message, "Hey, ready to start tracking?")
+def send_welcome(message: Message):
+    chat_user = get_user_from_message(message)
+    user_ref = db.reference("users")
+    reply: str = "Hey, ready to start tracking? Send the tracking link and expected price separated by a space!"
+    if not user_ref.child(str(chat_user.id)).get():
+        print("user does not exist")
+        # Create the user and set it in db
+        new_user = User(
+            chat_id=message.chat.id,
+            user_id=str(chat_user.id),
+            username=chat_user.username,
+            first_name=chat_user.first_name,
+        )
+        user_ref.child(new_user.user_id).set(new_user.model_dump())
+    else:
+        print("user exists")
+        if all_products := user_ref.child(str(chat_user.id)).child('products').get():
+            print("all_products", all_products)
+            for id, product_meta in all_products.items():
+                bot.send_message(
+                    message.chat.id,
+                    f"Link -> {product_meta.get('tracking_link')} \nExpected Price -> {product_meta.get('expected_price')} \nCurrent Price -> {product_meta.get('current_price')}",
+                )
+            return
+
+        else:
+            bot.reply_to(message, reply)
+            return
+
+    bot.reply_to(message, reply)
 
 @bot.message_handler(commands=["track"])
 def track_link(message: Message):
@@ -56,7 +84,7 @@ def track_link(message: Message):
 
     command_args = message.text.split(maxsplit=2)
     if(len(command_args) < 3):
-        bot.reply_to(message, "I need you to provide the tracking link and the expected price")
+        bot.reply_to(message, "Please provide the tracking link and the expected price separated by a space")
         return
 
     link = command_args[1]
@@ -97,8 +125,16 @@ def debug_print(message:Message):
     print(f"user is {user.model_dump()}")
     print("now fetching users")
     user_ref: db.Reference = db.reference("users")
-    this_user = user_ref.child(str(message.from_user.id)).get()
-    print("this_user", this_user)
-    
+    this_user_ref = user_ref.child(str(message.from_user.id))
+    # now fetching current user product
+    product_ref = this_user_ref.child("products")
+    print("product_ref", product_ref)
+    # printing current user products
+    print("product_ref is", product_ref.get())
+    all_products: dict = product_ref.get()
+    bot.send_message(message.chat.id, "Fetching list of your products")
+    for id, product_meta in all_products.items():
+        bot.send_message(message.chat.id, f"Link -> {product_meta.get('tracking_link')} \nExpected Price -> {product_meta.get('expected_price')} \nCurrent Price -> {product_meta.get('current_price')}")
+
 
 bot.infinity_polling()
