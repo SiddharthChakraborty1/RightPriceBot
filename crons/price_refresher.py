@@ -28,6 +28,10 @@ def check_product_prices_for_user(product_handler: ProductManager, user_id: str,
     
     for product_id, product_info in products.items():
         current_price = product_handler.fetch_product_price(product=product_info)
+        if current_price != product_info.get("current_price", 0):
+            # TODO @sid -> update current price of the product in db
+            pass
+            
         if current_price <= product_info.get("expected_price", 0):
             product_info.update({"current_price": current_price})
             notifiable_products[product_id] = product_info
