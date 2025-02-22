@@ -4,3 +4,4 @@ pydantic_core==2.27.2
 python-dotenv==0.21.0
 beautifulsoup4==4.10.0
 pyTelegramBotAPI==4.25.0
+ollama==0.4.7
