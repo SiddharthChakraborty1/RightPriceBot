@@ -1,4 +1,4 @@
-from constants import CONTEXT_MESSAGES
+from ai_utils.constants import CONTEXT_MESSAGES
 
 class DefaultContextGenerator:
     

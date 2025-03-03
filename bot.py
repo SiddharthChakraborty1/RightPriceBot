@@ -3,6 +3,9 @@ import telebot
 from telebot.types import Message, BotCommand
 from uuid import uuid4
 from dotenv import load_dotenv
+import time
+import threading
+from ai_utils.deep_seek import DeepSeekManager
 from database.db_connector import initialize_db
 import re
 from helpers.utils import get_user_from_message
@@ -103,17 +106,50 @@ def debug_print(message:Message):
     )
     print(f"user is {user.model_dump()}")
     print("now fetching users")
-    user_ref: db.Reference = db.reference("users")
+    user_ref = db.reference("users")
     this_user_ref = user_ref.child(str(message.from_user.id))
-    # now fetching current user product
+
     product_ref = this_user_ref.child("products")
     print("product_ref", product_ref)
-    # printing current user products
     print("product_ref is", product_ref.get())
     all_products: dict = product_ref.get()
     bot.send_message(message.chat.id, "Fetching list of your products")
     for id, product_meta in all_products.items():
         bot.send_message(message.chat.id, f"Link -> {product_meta.get('tracking_link')} \nExpected Price -> {product_meta.get('expected_price')} \nCurrent Price -> {product_meta.get('current_price')}")
 
+@bot.message_handler(commands=["ai"])
+def greet_ai(message: Message):
+    command_args = message.text.split(maxsplit=2)
+    chat_id = message.chat.id
+    ai_manager = DeepSeekManager()
+
+    user_message = " ".join(command_args[1::])
+    loading_message = bot.send_message(chat_id, "Loading")
+    print("user message", user_message)
+
+    def process_with_loading():
+        nonlocal loading_message
+        dots = [".", "..", "..."]
+        counter = 0
+
+        def update_loading():
+            nonlocal counter
+            while not processing_done:
+                bot.edit_message_text(f"Loading{dots[counter % 3]}", chat_id, loading_message.message_id)
+                counter += 1
+                time.sleep(0.5)
+
+        global processing_done
+        processing_done = False
+        loading_thread = threading.Thread(target=update_loading)
+        loading_thread.start()
+
+        response = ai_manager.chat(user_message)
+        processing_done = True
+
+        bot.edit_message_text(response, chat_id, loading_message.message_id)
+
+    processing_thread = threading.Thread(target=process_with_loading)
+    processing_thread.start()
 
 bot.infinity_polling()

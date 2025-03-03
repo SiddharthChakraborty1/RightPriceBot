@@ -1,5 +1,7 @@
 import ollama
-from context_generators import DefaultContextGenerator
+
+from ai_utils.context_generators import DefaultContextGenerator
+
 
 class AIManager(DefaultContextGenerator):
     
