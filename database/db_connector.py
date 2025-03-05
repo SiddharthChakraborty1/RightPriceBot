@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from firebase_admin import credentials, initialize_app, db
 
 
-def initialize_db()-> db:
+def initialize_db() -> db:
     """
     Initializes firebase realtime database and returns it's instance which
     can be used for querying
@@ -26,7 +26,5 @@ def initialize_db()-> db:
     }
     db_url = os.environ.get("RTDB_URL")
     cred = credentials.Certificate(_rtdb_configs)
-    initialize_app(cred, {
-        "databaseURL": f"{db_url}/"
-    })
+    initialize_app(cred, {"databaseURL": f"{db_url}/"})
     return db
