@@ -35,7 +35,7 @@ def send_welcome(message: Message):
     Hey, ready to start tracking?
     Send the tracking link and expected price separated by a space!
     """
-    if not( user := user_ref.child(str(chat_user.id)).get()):
+    if not (user := user_ref.child(str(chat_user.id)).get()):
         print("user does not exist")
         # Create the user and set it in db
         new_user = User(
@@ -48,12 +48,14 @@ def send_welcome(message: Message):
     else:
         print("user exists")
         print("firebase user", user)
-        if (
-            all_products := user.get("products")
-        ):
+        if all_products := user.get("products"):
             print("all_products", all_products)
             bot.send_message(
-                message.chat.id, f"Hi {user.get('first_name')}, good to see you again! Here's a list of all items you've added for tracking"
+                message.chat.id,
+                (
+                    f"Hi {user.get('first_name')}, good to see you again!"
+                    " Here's a list of all items you've added for tracking"
+                ),
             )
             for id, product_meta in all_products.items():
                 bot.send_message(
